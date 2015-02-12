@@ -4,6 +4,7 @@
 #include "cinder/Camera.h"
 #include "cinder/gl/Vbo.h"
 #include "cinder/ObjLoader.h"
+#include "cinder/Rand.h"
 
 
 using namespace ci;
@@ -70,6 +71,7 @@ class instancekarmaApp : public AppNative {
 
     Instance* makeCubeGrid();
     void      rotateAllChildren(Instance *root);
+    void      wiggleAllChildren(Instance *root);
    
     gl::GlslProg shader;
     CameraPersp  camera;
@@ -87,15 +89,16 @@ Instance* instancekarmaApp::makeCubeGrid()
     float yorig = -ygrid/2.0 * spacing;
     float size = 0.5;
     Instance *root = new Instance;
+    Cube *cube = new Cube;
     
-    
+#if 0
     for (int i = 0; i < xgrid; i++ ) {
         Instance *child = new Instance;
         child->position = Vec3f ( xorig+i*spacing, 0, 0 );
         for (int j = 0; j < ygrid; j++ ) {
             
             Instance *gchild = new Instance;
-            gchild->children.push_back(new Cube);
+            gchild->children.push_back(cube);
             gchild->position = Vec3f ( 0, yorig+j*spacing, 0 );
             gchild->scaling = Vec3f ( size,size,size );
             
@@ -104,20 +107,21 @@ Instance* instancekarmaApp::makeCubeGrid()
         }
         root->children.push_back(child);
     }
-
-//    
-//    for (int i = 0; i < xgrid; i++ ) {
-//        for (int j = 0; j < ygrid; j++ ) {
-//            
-//            Instance *child = new Instance;
-//            child->children.push_back(new Cube);
-//            child->position = Vec3f ( xorig+i*spacing, yorig+j*spacing, 0 );
-//            child->scaling = Vec3f ( size,size,size );
-//            
-//            root->children.push_back(child);
-//            
-//        }
-//    }
+#else
+    
+    for (int i = 0; i < xgrid; i++ ) {
+        for (int j = 0; j < ygrid; j++ ) {
+            
+            Instance *child = new Instance;
+            child->children.push_back(cube);
+            child->position = Vec3f ( xorig+i*spacing, yorig+j*spacing, 0 );
+            child->scaling = Vec3f ( size,size,size );
+            
+            root->children.push_back(child);
+            
+        }
+    }
+#endif
     
     return root;
 }
@@ -133,6 +137,7 @@ void instancekarmaApp::setup()
     rotationAngle = 0;
     root->position = Vec3f ( 0,0,0);
     Instance *cubeholder = new Instance;
+    //cubeholder->children.push_back( new Cube );
     cubeholder->children.push_back( new Cube );
     root->children.push_back(cubeholder);
     
@@ -160,21 +165,29 @@ void instancekarmaApp::rotateAllChildren(Instance *root)
             inst->orientation = q;
             rotateAllChildren(inst);
         }
-        // rotate the child's children
     }
 }
+
+void instancekarmaApp::wiggleAllChildren(Instance *root)
+{
+    for ( int i = 0; i < root->children.size(); i++ ) {
+        // wiggle this child
+        Instance *inst = dynamic_cast<Instance*> ( root->children[i] );
+        if ( inst ) {
+            Vec3f bump = 0.01 * Rand::randVec3f();
+            inst->position += bump;
+            wiggleAllChildren(inst);
+        }
+    }
+}
+
 void instancekarmaApp::update()
 {
     rotationAngle = rotationAngle + 0.001;
     
     rotateAllChildren(root);
+    wiggleAllChildren(root);
     
-//    Instance *child = dynamic_cast<Instance*> ( root->children[0] );
-//    if (child) {
-//        Quatf q;
-//        q.set(rotationAxis, rotationAngle);
-//        child->orientation = q;
-//    }
 }
 
 void instancekarmaApp::draw()
@@ -186,14 +199,11 @@ void instancekarmaApp::draw()
     
     
     gl::setMatrices(camera);
-    //gl::enableWireframe();
 
-	// clear out the window with black
 	gl::clear( Color( 0, 0, 1 ) );
     
     gl::pushMatrices();
     root->draw();
-    //gl::drawCube ( Vec3f(0,0,0), Vec3f(1,1,1));
     gl::popMatrices();
     
 
