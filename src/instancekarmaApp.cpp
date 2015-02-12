@@ -30,7 +30,7 @@ namespace csg {
             gl::translate( position );
             gl::rotate( orientation );
             gl::scale ( scaling );
-            for (int i=0; i<children.size(); i++ )
+            for (unsigned int i=0; i<children.size(); i++ )
             {
                 children[i]->draw();
             }
@@ -85,8 +85,8 @@ Instance* instancekarmaApp::makeCubeGrid()
     int xgrid = 10; // grid dims
     int ygrid = 10;
     float spacing = 1;
-    float xorig = -xgrid/2.0 * spacing;
-    float yorig = -ygrid/2.0 * spacing;
+    float xorig = -xgrid/2.0f * spacing;
+    float yorig = -ygrid/2.0f * spacing;
     float size = 0.5;
     Instance *root = new Instance;
     Cube *cube = new Cube;
@@ -143,7 +143,7 @@ void instancekarmaApp::setup()
     
     root->children.push_back(makeCubeGrid());
     
-    camera.setPerspective ( 65.0, float(getWindowWidth()) / getWindowHeight(), 0.1, 100 );
+    camera.setPerspective ( 65.0f, float(getWindowWidth()) / getWindowHeight(), 0.1f, 100.0f );
     camera.setEyePoint(Vec3f(0,0,5));
     camera.setViewDirection(Vec3f(0,0,-1));
     camera.setWorldUp(Vec3f(0,1,0));
@@ -156,7 +156,7 @@ void instancekarmaApp::mouseDown( MouseEvent event )
 
 void instancekarmaApp::rotateAllChildren(Instance *root)
 {
-    for ( int i = 0; i < root->children.size(); i++ ) {
+    for ( unsigned int i = 0; i < root->children.size(); i++ ) {
         // rotate this child
         Instance *inst = dynamic_cast<Instance*> ( root->children[i] );
         if ( inst ) {
@@ -183,7 +183,7 @@ void instancekarmaApp::wiggleAllChildren(Instance *root)
 
 void instancekarmaApp::update()
 {
-    rotationAngle = rotationAngle + 0.001;
+    rotationAngle = rotationAngle + 0.001f;
     
     rotateAllChildren(root);
     wiggleAllChildren(root);
