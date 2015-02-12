@@ -69,51 +69,33 @@ class instancekarmaApp : public AppNative {
 	void update();
 	void draw();
 
-    Instance* makeCubeGrid();
+    Instance* makeGrid(Node *node, float size = 1.0f);
     void      rotateAllChildren(Instance *root);
     void      wiggleAllChildren(Instance *root);
    
     gl::GlslProg shader;
     CameraPersp  camera;
     Instance    *root;
+	Instance    *theGrid;
     Vec3f        rotationAxis;
     float        rotationAngle;
 };
 
-Instance* instancekarmaApp::makeCubeGrid()
+Instance* instancekarmaApp::makeGrid(Node* node, float size)
 {
     int xgrid = 10; // grid dims
     int ygrid = 10;
     float spacing = 1;
     float xorig = -xgrid/2.0f * spacing;
     float yorig = -ygrid/2.0f * spacing;
-    float size = 0.5;
     Instance *root = new Instance;
-    Cube *cube = new Cube;
     
-#if 0
-    for (int i = 0; i < xgrid; i++ ) {
-        Instance *child = new Instance;
-        child->position = Vec3f ( xorig+i*spacing, 0, 0 );
-        for (int j = 0; j < ygrid; j++ ) {
-            
-            Instance *gchild = new Instance;
-            gchild->children.push_back(cube);
-            gchild->position = Vec3f ( 0, yorig+j*spacing, 0 );
-            gchild->scaling = Vec3f ( size,size,size );
-            
-            child->children.push_back(gchild);
-            
-        }
-        root->children.push_back(child);
-    }
-#else
     
     for (int i = 0; i < xgrid; i++ ) {
         for (int j = 0; j < ygrid; j++ ) {
             
             Instance *child = new Instance;
-            child->children.push_back(cube);
+            child->children.push_back(node);
             child->position = Vec3f ( xorig+i*spacing, yorig+j*spacing, 0 );
             child->scaling = Vec3f ( size,size,size );
             
@@ -121,7 +103,7 @@ Instance* instancekarmaApp::makeCubeGrid()
             
         }
     }
-#endif
+
     
     return root;
 }
@@ -141,8 +123,10 @@ void instancekarmaApp::setup()
     cubeholder->children.push_back( new Cube );
     root->children.push_back(cubeholder);
     
-    root->children.push_back(makeCubeGrid());
-    
+    //theGrid = makeGrid(new Cube, 0.5f);
+	theGrid = makeGrid(new Obj("mii.obj"), 0.003f);
+	root->children.push_back(theGrid);
+
     camera.setPerspective ( 65.0f, float(getWindowWidth()) / getWindowHeight(), 0.1f, 100.0f );
     camera.setEyePoint(Vec3f(0,0,5));
     camera.setViewDirection(Vec3f(0,0,-1));
@@ -156,12 +140,14 @@ void instancekarmaApp::mouseDown( MouseEvent event )
 
 void instancekarmaApp::rotateAllChildren(Instance *root)
 {
+	Rand r(5);
     for ( unsigned int i = 0; i < root->children.size(); i++ ) {
         // rotate this child
         Instance *inst = dynamic_cast<Instance*> ( root->children[i] );
         if ( inst ) {
             Quatf q;
-            q.set(rotationAxis, rotationAngle);
+            q.set( rotationAxis + 0.5f * r.nextVec3f(),  
+					r.nextFloat()*3.14159f + rotationAngle * 2.0f * r.nextFloat() );
             inst->orientation = q;
             rotateAllChildren(inst);
         }
@@ -170,11 +156,11 @@ void instancekarmaApp::rotateAllChildren(Instance *root)
 
 void instancekarmaApp::wiggleAllChildren(Instance *root)
 {
-    for ( int i = 0; i < root->children.size(); i++ ) {
+    for ( unsigned int i = 0; i < root->children.size(); i++ ) {
         // wiggle this child
         Instance *inst = dynamic_cast<Instance*> ( root->children[i] );
         if ( inst ) {
-            Vec3f bump = 0.01 * Rand::randVec3f();
+            Vec3f bump = 0.01f * Rand::randVec3f();
             inst->position += bump;
             wiggleAllChildren(inst);
         }
@@ -183,10 +169,10 @@ void instancekarmaApp::wiggleAllChildren(Instance *root)
 
 void instancekarmaApp::update()
 {
-    rotationAngle = rotationAngle + 0.001f;
+    rotationAngle = rotationAngle + 0.01f;
     
-    rotateAllChildren(root);
-    wiggleAllChildren(root);
+    rotateAllChildren(theGrid);
+    //wiggleAllChildren(root);
     
 }
 
